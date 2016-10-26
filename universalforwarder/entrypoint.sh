@@ -38,7 +38,7 @@ elif [ "$1" = 'start-service' ]; then
 
   if [[ $__license_ok == "false" ]]; then
     cat << EOF
-Splunk Enterprise
+Splunk Forwarder
 ==============
 
   Available Options:
@@ -51,11 +51,26 @@ Splunk Enterprise
 
   Usage:
 
-    docker run -it outcoldman/splunk:latest
-    docker run --env SPLUNK_START_ARGS="--accept-license" outcoldman/splunk:latest
+    docker run -it splunk/universalforwarder:6.4.1
+    docker run --env SPLUNK_START_ARGS="--accept-license" outcoldman/splunk:latest-forwarder
 
 EOF
     exit 1
+  fi
+
+  if [[ $__configured == "false" ]]; then
+    # If we have not configured yet allow user to specify some commands which can be executed before we start Splunk for the first time
+    if [[ -n ${SPLUNK_BEFORE_START_CMD} ]]; then
+      sudo -HEu ${SPLUNK_USER} sh -c "${SPLUNK_HOME}/bin/splunk ${SPLUNK_BEFORE_START_CMD}"
+    fi
+    for n in {1..30}; do
+      if [[ -n $(eval echo \$\{SPLUNK_BEFORE_START_CMD_${n}\}) ]]; then
+        sudo -HEu ${SPLUNK_USER} sh -c "${SPLUNK_HOME}/bin/splunk $(eval echo \$\{SPLUNK_BEFORE_START_CMD_${n}\})"
+      else
+        # We do not want to iterate all, if one in the sequence is not set
+        break
+      fi
+    done
   fi
 
   sudo -HEu ${SPLUNK_USER} ${SPLUNK_HOME}/bin/splunk start ${SPLUNK_START_ARGS}
@@ -121,6 +136,8 @@ EOF
 
   sudo -HEu ${SPLUNK_USER} tail -n 0 -f ${SPLUNK_HOME}/var/log/splunk/splunkd_stderr.log -f ${SPLUNK_HOME}/var/log/splunk/splunkd.log &
   wait
+elif [ "$1" = 'splunk-bash' ]; then
+  sudo -u ${SPLUNK_USER} /bin/bash --init-file ${SPLUNK_HOME}/bin/setSplunkEnv
 else
   "$@"
 fi
