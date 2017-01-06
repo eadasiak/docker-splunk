@@ -1,0 +1,7 @@
+FROM splunk/splunk:6.5.0
+
+COPY ethos-entrypoint.sh /sbin/ethos-entrypoint.sh
+RUN chmod +x /sbin/ethos-entrypoint.sh
+
+ENTRYPOINT ["/sbin/ethos-entrypoint.sh"]
+CMD ["start-service"]
