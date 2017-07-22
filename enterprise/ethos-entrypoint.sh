@@ -1,6 +1,26 @@
 #!/bin/bash
 
-set -e
+set -ea
+
+# Get the name of the cluster from the specified file
+if [ -f $SPLUNK_ETHOS_CLUSTERNAME_FILE ]; then
+  source $SPLUNK_ETHOS_CLUSTERNAME_FILE
+else
+  MESOS_CLUSTER=unknown
+fi
+
+# Get the MESOS_ATTRIBUTES, ethos_role and zone from the attributes file
+if [ -f $SPLUNK_ETHOS_ATTRIBUTES_FILE ]; then
+  export $(cat $SPLUNK_ETHOS_ATTRIBUTES_FILE | tr ";" "+")
+  export $(echo $MESOS_ATTRIBUTES | cut -d "+" -f 1 | tr ":" "=")
+  export $(echo $MESOS_ATTRIBUTES | cut -d "+" -f 2 | tr ":" "=")
+else
+  MESOS_ATTRIBUTES=unknown
+  ethos_role=unknown
+  zone=unknown
+fi
+
+SPLUNK_HOST="${MESOS_CLUSTER}_${ethos_role}_${zone}_${LIBPROCESS_IP}"
 
 if [ "$1" = 'splunk' ]; then
   shift
@@ -166,6 +186,15 @@ EOF
         break
       fi
     done
+  fi
+
+  # Set the hostname to something more meaningful when we start sending data
+  if [ -f /opt/splunk/etc/system/local/inputs.conf ]; then
+    sed -i "s/host = .*$/host = ${SPLUNK_HOST}/" /opt/splunk/etc/system/local/inputs.conf
+  fi
+
+  if [ -f /opt/splunk/etc/system/local/server.conf ]; then
+    sed -i "s/serverName = .*$/serverName = ${SPLUNK_HOST}/" /opt/splunk/etc/system/local/server.conf
   fi
 
   # Restart splunk to pick up any changes (HEC token overrides) that don't take immediate effect
