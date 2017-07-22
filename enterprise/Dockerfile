@@ -55,5 +55,5 @@ WORKDIR /opt/splunk
 # Configurations folder, var folder for everything (indexes, logs, kvstore)
 VOLUME [ "/opt/splunk/etc", "/opt/splunk/var" ]
 
-ENTRYPOINT ["/sbin/ethos-entrypoint.sh"]
+ENTRYPOINT ["/sbin/entrypoint.sh"]
 CMD ["start-service"]
