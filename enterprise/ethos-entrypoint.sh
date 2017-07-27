@@ -20,7 +20,7 @@ else
   zone=unknown
 fi
 
-SPLUNK_HOST="${MESOS_CLUSTER}_${ethos_role}_${zone}_${LIBPROCESS_IP}"
+SPLUNK_HOST="${MESOS_CLUSTER}_${ethos_role}_${zone}_${MARATHON_APP_ID}_${LIBPROCESS_IP}"
 
 if [ "$1" = 'splunk' ]; then
   shift
