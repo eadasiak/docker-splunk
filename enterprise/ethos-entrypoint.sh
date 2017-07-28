@@ -20,7 +20,7 @@ else
   zone=unknown
 fi
 
-SPLUNK_HOST="${MESOS_CLUSTER}_${ethos_role}_${zone}_${MARATHON_APP_ID}_${LIBPROCESS_IP}"
+SPLUNK_HOST="${MESOS_CLUSTER}_${ethos_role}_${zone}_${MARATHON_APP_ID:1}_${LIBPROCESS_IP}"
 
 if [ "$1" = 'splunk' ]; then
   shift
@@ -156,6 +156,8 @@ EOF
         if [[ -n $(eval echo \$\{SPLUNK_HEC_${n}_TOKEN\}) ]]; then
           sudo -HEu ${SPLUNK_USER} sh -c "sed -i \"/$(eval echo \${SPLUNK_HEC_${n}\})/,/token = /{s/token = .*$/token = $(eval echo \$\{SPLUNK_HEC_${n}_TOKEN\})/}\" ${SPLUNK_HOME}/etc/apps/splunk_httpinput/local/inputs.conf"
         fi
+        sudo -HEu ${SPLUNK_USER} sh -c "echo \"queueSize = ${SPLUNK_HEC_QUEUESIZE}\" >> ${SPLUNK_HOME}/etc/apps/splunk_httpinput/local/inputs.conf"
+        sudo -HEu ${SPLUNK_USER} sh -c "echo \"persistentQueueSize = ${SPLUNK_HEC_PERSISTENTQUEUESIZE}\" >> ${SPLUNK_HOME}/etc/apps/splunk_httpinput/local/inputs.conf"
       fi
     done
 
@@ -190,11 +192,11 @@ EOF
 
   # Set the hostname to something more meaningful when we start sending data
   if [ -f /opt/splunk/etc/system/local/inputs.conf ]; then
-    sed -i "s/host = .*$/host = ${SPLUNK_HOST}/" /opt/splunk/etc/system/local/inputs.conf
+    sudo -HEu ${SPLUNK_USER} sh -c "sed -i \"s/host = .*$/host = ${SPLUNK_HOST}/\" /opt/splunk/etc/system/local/inputs.conf"
   fi
 
   if [ -f /opt/splunk/etc/system/local/server.conf ]; then
-    sed -i "s/serverName = .*$/serverName = ${SPLUNK_HOST}/" /opt/splunk/etc/system/local/server.conf
+    sudo -HEu ${SPLUNK_USER} sh -c "sed -i \"s/serverName = .*$/serverName = ${SPLUNK_HOST}/\" /opt/splunk/etc/system/local/server.conf"
   fi
 
   # Restart splunk to pick up any changes (HEC token overrides) that don't take immediate effect

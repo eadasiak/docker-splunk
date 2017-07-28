@@ -1,5 +1,8 @@
 FROM splunk/splunk:6.5.2
 
+ENV SPLUNK_HEC_QUEUESIZE 500KB
+ENV SPLUNK_HEC_PERSISTENTQUEUESIZE 0
+
 COPY ethos-entrypoint.sh /sbin/ethos-entrypoint.sh
 RUN chmod +x /sbin/ethos-entrypoint.sh
 
