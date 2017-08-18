@@ -199,6 +199,18 @@ EOF
     sudo -HEu ${SPLUNK_USER} sh -c "sed -i \"s/serverName = .*$/serverName = ${SPLUNK_HOST}/\" /opt/splunk/etc/system/local/server.conf"
   fi
 
+  # Set the queue sizes in server.conf for higher volume throughput
+  cat << EOT >> /opt/splunk/etc/system/local/server.conf
+    [queue=parsingQueue]
+    maxSize=${SPLUNK_PARSINGQUEUESIZE}
+    [queue=aggQueue]
+    maxSize=${SPLUNK_AGGQUEUESIZE}
+    [queue=typingQueue]
+    maxSize=${SPLUNK_TYPINGQUEUESIZE}
+    [queue=indexQueue]
+    maxSize=${SPLUNK_INDEXQUEUESIZE}
+  EOT
+
   # Restart splunk to pick up any changes (HEC token overrides) that don't take immediate effect
   sudo -HEu ${SPLUNK_USER} sh -c "${SPLUNK_HOME}/bin/splunk restart"
 
